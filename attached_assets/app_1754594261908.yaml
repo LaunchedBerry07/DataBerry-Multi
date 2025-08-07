@@ -1,0 +1,31 @@
+runtime: nodejs20
+
+env_variables:
+  NODE_ENV: production
+  DATABASE_URL: ${DATABASE_URL}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+  SESSION_SECRET: ${SESSION_SECRET}
+
+automatic_scaling:
+  min_instances: 1
+  max_instances: 10
+  target_cpu_utilization: 0.6
+
+resources:
+  cpu: 1
+  memory_gb: 0.5
+  disk_size_gb: 10
+
+handlers:
+  - url: /static
+    static_dir: dist
+    secure: always
+
+  - url: /.*
+    script: auto
+    secure: always
+
+vpc_access_connector:
+  name: projects/${GOOGLE_CLOUD_PROJECT}/locations/us-central1/connectors/default-connector
+  egress_setting: private-ranges-only

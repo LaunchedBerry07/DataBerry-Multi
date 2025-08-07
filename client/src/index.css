@@ -1,5 +1,5 @@
-/* FontAwesome icons support */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -27,18 +27,37 @@
   --ring: hsl(240, 5%, 64.9%);
   --radius: 0.75rem;
   
-  /* Custom color palette from provided image */
-  --purple-light: hsl(264, 89%, 85%); /* B97DFA */
-  --purple-medium: hsl(264, 89%, 71%); /* 4B3196 */
-  --purple-dark: hsl(261, 85%, 43%); /* 341E69 */
-  --cyan: hsl(190, 100%, 59%); /* 38D5FD */
-  --blue: hsl(221, 100%, 54%); /* 0068D6 */
-  --blue-dark: hsl(225, 100%, 33%); /* 01351F */
-  --pink: hsl(330, 100%, 68%); /* FD5CA3 */
-  --pink-dark: hsl(330, 75%, 43%); /* FD2FA3 */
-  --purple-accent: hsl(270, 75%, 54%); /* A6006D */
-  --gray-light: hsl(240, 10%, 98%);
-  --gray-medium: hsl(240, 5%, 84%); /* D7D4DD */
+  /* Berry theme color palette */
+  --purple-50: hsl(264, 89%, 95%);
+  --purple-100: hsl(264, 89%, 90%);
+  --purple-500: hsl(264, 89%, 71%);
+  --purple-600: hsl(261, 85%, 60%);
+  --purple-700: hsl(261, 85%, 43%);
+  --purple-900: hsl(261, 85%, 25%);
+  
+  --cyan-50: hsl(190, 100%, 95%);
+  --cyan-100: hsl(190, 100%, 90%);
+  --cyan-400: hsl(190, 100%, 69%);
+  --cyan-500: hsl(190, 100%, 59%);
+  --cyan-600: hsl(190, 100%, 49%);
+  --cyan-700: hsl(221, 100%, 54%);
+  
+  --pink-50: hsl(330, 100%, 95%);
+  --pink-100: hsl(330, 100%, 90%);
+  --pink-400: hsl(330, 100%, 78%);
+  --pink-500: hsl(330, 100%, 68%);
+  --pink-600: hsl(330, 100%, 58%);
+  --pink-700: hsl(330, 75%, 43%);
+  
+  --gray-50: hsl(240, 10%, 98%);
+  --gray-100: hsl(240, 10%, 95%);
+  --gray-200: hsl(240, 6%, 90%);
+  --gray-300: hsl(240, 5%, 84%);
+  --gray-400: hsl(240, 5%, 64.9%);
+  --gray-500: hsl(240, 4%, 46%);
+  --gray-600: hsl(217, 19%, 27%);
+  --gray-700: hsl(217, 19%, 20%);
+  --gray-900: hsl(217, 19%, 10%);
 }
 
 .dark {
@@ -52,8 +71,8 @@
   --card-foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 3.7%, 15.9%);
   --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(207, 90%, 54%);
-  --primary-foreground: hsl(211, 100%, 99%);
+  --primary: hsl(264, 89%, 71%);
+  --primary-foreground: hsl(0, 0%, 100%);
   --secondary: hsl(240, 3.7%, 15.9%);
   --secondary-foreground: hsl(0, 0%, 98%);
   --accent: hsl(240, 3.7%, 15.9%);
@@ -61,7 +80,6 @@
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsl(240, 4.9%, 83.9%);
-  --radius: 0.5rem;
 }
 
 @layer base {
@@ -71,20 +89,11 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
-/* Custom styles for Material Design elements */
-.shadow-material {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
-}
-
-.shadow-material-lg {
-  box-shadow: 0 8px 16px rgba(0,0,0,0.15), 0 16px 32px rgba(0,0,0,0.15);
-}
-
-/* Custom styles for modern admin dashboard */
+/* Modern shadow styles */
 .shadow-modern {
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
@@ -93,19 +102,23 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-.gradient-purple {
-  background: linear-gradient(135deg, var(--purple-medium) 0%, var(--purple-dark) 100%);
+/* Berry theme gradient utilities */
+.gradient-bg {
+  background: linear-gradient(135deg, hsl(264, 89%, 71%) 0%, hsl(190, 100%, 59%) 50%, hsl(330, 100%, 68%) 100%);
 }
 
-.gradient-cyan {
-  background: linear-gradient(135deg, var(--cyan) 0%, var(--blue) 100%);
+.gradient-text {
+  background: linear-gradient(135deg, hsl(264, 89%, 71%) 0%, hsl(190, 100%, 59%) 50%, hsl(330, 100%, 68%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.gradient-pink {
-  background: linear-gradient(135deg, var(--pink) 0%, var(--pink-dark) 100%);
+.gradient-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(6, 182, 212, 0.05) 50%, rgba(236, 72, 153, 0.05) 100%);
 }
 
-/* Custom color utilities */
+/* Purple gradient variations */
 .bg-purple-gradient {
   background: linear-gradient(135deg, hsl(264, 89%, 71%) 0%, hsl(261, 85%, 43%) 100%);
 }
@@ -118,6 +131,12 @@
   background: linear-gradient(135deg, hsl(330, 100%, 68%) 0%, hsl(330, 75%, 43%) 100%);
 }
 
+/* Sidebar transition */
+.sidebar-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom color utilities for berry theme */
 .text-purple-600 {
   color: hsl(264, 89%, 71%);
 }
@@ -152,4 +171,137 @@
 
 .hover\:bg-pink-700:hover {
   background-color: hsl(330, 75%, 43%);
+}
+
+/* Purple tones */
+.bg-purple-50 {
+  background-color: hsl(264, 89%, 95%);
+}
+
+.bg-purple-100 {
+  background-color: hsl(264, 89%, 90%);
+}
+
+.text-purple-700 {
+  color: hsl(261, 85%, 43%);
+}
+
+.text-purple-900 {
+  color: hsl(261, 85%, 25%);
+}
+
+.border-purple-200 {
+  border-color: hsl(264, 89%, 85%);
+}
+
+.border-purple-300 {
+  border-color: hsl(264, 89%, 80%);
+}
+
+.border-purple-500 {
+  border-color: hsl(264, 89%, 71%);
+}
+
+/* Cyan tones */
+.bg-cyan-50 {
+  background-color: hsl(190, 100%, 95%);
+}
+
+.bg-cyan-100 {
+  background-color: hsl(190, 100%, 90%);
+}
+
+.text-cyan-700 {
+  color: hsl(221, 100%, 54%);
+}
+
+.text-cyan-900 {
+  color: hsl(221, 100%, 35%);
+}
+
+.border-cyan-200 {
+  border-color: hsl(190, 100%, 85%);
+}
+
+.border-cyan-300 {
+  border-color: hsl(190, 100%, 80%);
+}
+
+.border-cyan-500 {
+  border-color: hsl(190, 100%, 59%);
+}
+
+/* Pink tones */
+.bg-pink-50 {
+  background-color: hsl(330, 100%, 95%);
+}
+
+.bg-pink-100 {
+  background-color: hsl(330, 100%, 90%);
+}
+
+.text-pink-700 {
+  color: hsl(330, 75%, 43%);
+}
+
+.text-pink-900 {
+  color: hsl(330, 75%, 25%);
+}
+
+.border-pink-200 {
+  border-color: hsl(330, 100%, 85%);
+}
+
+.border-pink-300 {
+  border-color: hsl(330, 100%, 80%);
+}
+
+.border-pink-500 {
+  border-color: hsl(330, 100%, 68%);
+}
+
+/* Animation utilities */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Focus states */
+.focus\:ring-purple-500:focus {
+  --tw-ring-color: hsl(264, 89%, 71%);
+}
+
+.focus\:border-purple-500:focus {
+  border-color: hsl(264, 89%, 71%);
+}
+
+/* Button hover effects */
+.hover\:shadow-lg:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Custom scrollbar */
+.scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-area::-webkit-scrollbar-track {
+  background: hsl(240, 10%, 98%);
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background: hsl(240, 5%, 84%);
+  border-radius: 3px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background: hsl(240, 5%, 64.9%);
 }

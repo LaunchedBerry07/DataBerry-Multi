@@ -1,118 +1,79 @@
-# Gmail Finance Manager
+# Overview
 
-## Overview
+This is a Gmail Finance Manager application that helps users organize, categorize, and manage financial emails from their Gmail accounts. The application integrates with the Gmail API to fetch emails, automatically categorizes them (receipts, bills, statements, etc.), and provides tools for bulk operations, contact management, and data export. Built with a modern React frontend and Express.js backend, it features a comprehensive dashboard for email analysis and financial document management.
 
-This is a full-stack web application that helps users manage financial emails from their Gmail accounts. The application provides features for organizing, filtering, and exporting financial communications like receipts, bills, statements, and invoices.
-
-## User Preferences
+# User Preferences
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes
+# System Architecture
 
-### January 24, 2025 - Modern Admin Dashboard Design Update
-✓ Applied custom color scheme with purple, cyan, and pink gradients throughout the application
-✓ Integrated user's custom app icon into authentication screen and dashboard branding
-✓ Transformed the dashboard from horizontal tabs to modern sidebar navigation
-✓ Updated all stat cards with gradient backgrounds, trend indicators, and modern shadows
-✓ Redesigned quick filters with gradient buttons and improved visual hierarchy
-✓ Modernized authentication screen with gradient backgrounds and feature highlights
-✓ Enhanced labels grid with color-coded gradient cards and improved spacing
-✓ Applied consistent modern card design across all components with shadow-modern styling
+## Frontend Architecture
+- **Framework**: React with TypeScript using Vite as the build tool
+- **UI Components**: Shadcn/ui component library built on Radix UI primitives
+- **Styling**: Tailwind CSS with custom design system and CSS variables
+- **State Management**: TanStack React Query for server state and caching
+- **Routing**: Wouter for client-side routing
+- **Forms**: React Hook Form with Zod validation
 
-## System Architecture
+## Backend Architecture
+- **Runtime**: Node.js with Express.js framework
+- **Language**: TypeScript with ES modules
+- **API Design**: RESTful API structure with organized route handlers
+- **Session Management**: Express sessions with PostgreSQL store (connect-pg-simple)
+- **Authentication**: Google OAuth 2.0 for Gmail API access
 
-### Frontend Architecture
-The frontend is built with React and TypeScript, using a modern component-based architecture:
-- **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite for fast development and optimized production builds
-- **UI Library**: Shadcn/ui components with Radix UI primitives
-- **Styling**: Tailwind CSS with CSS variables for theming
-- **State Management**: TanStack Query (React Query) for server state management
-- **Routing**: Wouter for lightweight client-side routing
+## Database Layer
+- **ORM**: Drizzle ORM for type-safe database operations
+- **Database**: PostgreSQL (configured for Neon serverless)
+- **Schema Management**: Drizzle Kit for migrations and schema management
+- **Connection**: Neon serverless driver with WebSocket support
 
-### Backend Architecture
-The backend follows a RESTful API pattern with Express.js:
-- **Framework**: Express.js with TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
-- **Database Provider**: Neon Database (serverless PostgreSQL)
-- **Authentication**: Google OAuth 2.0 for Gmail access
-- **API Design**: RESTful endpoints with structured error handling
+## Project Structure
+- **Monorepo Setup**: Shared schema and types between client and server
+- **Client**: React application in `/client` directory
+- **Server**: Express API in `/server` directory  
+- **Shared**: Common schemas and types in `/shared` directory
+- **Build Process**: Separate build processes for frontend (Vite) and backend (esbuild)
 
-### Build System
-- **Development**: Uses Vite dev server with HMR for frontend, tsx for backend hot reloading
-- **Production**: Vite builds frontend to static assets, esbuild bundles backend
-- **TypeScript**: Shared types between frontend and backend via `shared/` directory
+## Key Features Architecture
+- **Gmail Integration**: OAuth flow with Gmail API for email fetching and categorization
+- **Bulk Operations**: Batch job system for processing large sets of emails and contacts
+- **Email Categorization**: Automatic classification of financial emails (receipts, bills, statements)
+- **Contact Management**: Extract and manage contacts from email communications
+- **Export System**: Multiple export formats (CSV, JSON, PDF) for data portability
+- **Real-time Monitoring**: Job status tracking and progress reporting
 
-## Key Components
+# External Dependencies
 
-### Authentication System
-- Google OAuth 2.0 integration for Gmail access
-- Stores access tokens and refresh tokens in PostgreSQL
-- Gmail API integration for reading emails and managing labels
+## Core Framework Dependencies
+- **@neondatabase/serverless**: Serverless PostgreSQL driver for database connectivity
+- **drizzle-orm**: Type-safe ORM for database operations
+- **@tanstack/react-query**: Server state management and caching
+- **@radix-ui/***: Unstyled, accessible UI component primitives
+- **react-hook-form**: Form handling with validation
+- **@hookform/resolvers**: Form validation resolvers
+- **zod**: Schema validation and type inference
 
-### Database Schema
-The application uses the following main entities:
-- **Users**: Stores user authentication data and Google tokens
-- **Finance Labels**: Custom categorization labels for financial emails
-- **Email Filters**: Automated rules for processing incoming emails
-- **Financial Contacts**: Vendors, banks, and other financial entities
-- **Financial Emails**: Processed email metadata and attachments
-- **Export Jobs**: Background job tracking for data exports
+## Authentication & External APIs
+- **Google OAuth 2.0**: Gmail API authentication and authorization
+- **Gmail API**: Email fetching, reading, and metadata extraction
+- **Google Drive API**: Potential integration for attachment storage
 
-### Email Processing
-- Fetches emails from Gmail API using stored access tokens
-- Categorizes emails automatically (receipts, bills, statements, invoices)
-- Extracts and stores relevant metadata
-- Manages email attachments and exports
+## UI and Styling
+- **tailwindcss**: Utility-first CSS framework
+- **class-variance-authority**: Component variant styling
+- **lucide-react**: Icon library
+- **date-fns**: Date manipulation and formatting
 
-### User Interface
-- Dashboard with statistics and quick filters
-- Label management for custom categorization
-- Filter configuration for automated email processing
-- Contact management for financial entities
-- Export functionality for data and documents
+## Development Tools
+- **vite**: Frontend build tool and development server
+- **esbuild**: Backend bundling for production
+- **tsx**: TypeScript execution for development
+- **@replit/vite-plugin-runtime-error-modal**: Development error handling
+- **@replit/vite-plugin-cartographer**: Development debugging tools
 
-## Data Flow
-
-1. **Authentication**: User authenticates with Google OAuth, tokens stored in database
-2. **Email Sync**: Application fetches emails from Gmail API using stored tokens
-3. **Processing**: Emails are categorized and metadata extracted
-4. **Storage**: Email data and metadata stored in PostgreSQL
-5. **Display**: Frontend queries processed data via REST API
-6. **Management**: Users can create labels, filters, and export data
-
-## External Dependencies
-
-### Google Services
-- **Gmail API**: For reading emails and managing labels
-- **Google OAuth 2.0**: For authentication and authorization
-- **Google Identity Services**: For frontend authentication flow
-
-### Database
-- **Neon Database**: Serverless PostgreSQL hosting
-- **Drizzle ORM**: Type-safe database queries and migrations
-
-### Development Tools
-- **Replit Integration**: Development environment optimizations
-- **Hot Module Replacement**: Fast development feedback via Vite
-
-## Deployment Strategy
-
-### Development
-- Frontend: Vite dev server with proxy to backend
-- Backend: tsx for TypeScript execution with hot reloading
-- Database: Connects to Neon Database via DATABASE_URL environment variable
-
-### Production
-- Frontend: Static assets built with Vite, served by Express
-- Backend: Bundled with esbuild, runs as Node.js application
-- Database: Production Neon Database instance
-- Environment: Requires DATABASE_URL and Google OAuth credentials
-
-### Key Environment Variables
-- `DATABASE_URL`: PostgreSQL connection string (required)
-- `GOOGLE_CLIENT_ID`: Google OAuth client ID (required for authentication)
-- `NODE_ENV`: Environment mode (development/production)
-
-The application is designed to be deployed on platforms that support Node.js applications with PostgreSQL databases, with particular optimization for Replit's environment.
+## Session and Security
+- **connect-pg-simple**: PostgreSQL session store for Express
+- **express-session**: Session management middleware
+- **Environment Variables**: Secure configuration management for API keys and database credentials

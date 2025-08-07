@@ -1,236 +1,277 @@
-import { 
-  users, 
-  financeLabels, 
-  emailFilters, 
-  financialContacts, 
-  financialEmails, 
-  exportJobs,
-  type User, 
-  type InsertUser,
-  type FinanceLabel,
-  type InsertFinanceLabel,
-  type EmailFilter,
-  type InsertEmailFilter,
-  type FinancialContact,
-  type InsertFinancialContact,
+import {
+  users,
+  financialEmails,
+  financialContacts,
+  gmailLabels,
+  emailFilters,
+  batchJobs,
+  type User,
+  type UpsertUser,
   type FinancialEmail,
-  type InsertFinancialEmail,
-  type ExportJob,
-  type InsertExportJob
+  type InsertFinancialEmailType,
+  type FinancialContact,
+  type InsertFinancialContactType,
+  type GmailLabel,
+  type InsertGmailLabelType,
+  type EmailFilter,
+  type InsertEmailFilterType,
+  type BatchJob,
+  type InsertBatchJobType,
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, and, like, inArray, sql } from "drizzle-orm";
 
 export interface IStorage {
-  // User management
-  getUser(id: number): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  getUserByGoogleId(googleId: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
-
-  // Finance labels
-  getFinanceLabels(userId: number): Promise<FinanceLabel[]>;
-  createFinanceLabel(label: InsertFinanceLabel): Promise<FinanceLabel>;
-  updateFinanceLabel(id: number, updates: Partial<FinanceLabel>): Promise<FinanceLabel | undefined>;
-  deleteFinanceLabel(id: number): Promise<boolean>;
-
-  // Email filters
-  getEmailFilters(userId: number): Promise<EmailFilter[]>;
-  createEmailFilter(filter: InsertEmailFilter): Promise<EmailFilter>;
-  updateEmailFilter(id: number, updates: Partial<EmailFilter>): Promise<EmailFilter | undefined>;
-  deleteEmailFilter(id: number): Promise<boolean>;
-
-  // Financial contacts
-  getFinancialContacts(userId: number): Promise<FinancialContact[]>;
-  createFinancialContact(contact: InsertFinancialContact): Promise<FinancialContact>;
-  updateFinancialContact(id: number, updates: Partial<FinancialContact>): Promise<FinancialContact | undefined>;
-
-  // Financial emails
-  getFinancialEmails(userId: number, category?: string): Promise<FinancialEmail[]>;
-  createFinancialEmail(email: InsertFinancialEmail): Promise<FinancialEmail>;
-  getEmailStats(userId: number): Promise<{totalEmails: number, receipts: number, bills: number, statements: number}>;
-
-  // Export jobs
-  getExportJobs(userId: number): Promise<ExportJob[]>;
-  createExportJob(job: InsertExportJob): Promise<ExportJob>;
-  updateExportJob(id: number, updates: Partial<ExportJob>): Promise<ExportJob | undefined>;
+  // User operations (mandatory for Replit Auth)
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  
+  // Email operations
+  createFinancialEmail(email: InsertFinancialEmailType): Promise<FinancialEmail>;
+  getFinancialEmails(userId: string, limit?: number, offset?: number): Promise<FinancialEmail[]>;
+  getFinancialEmailsByCategory(userId: string, category: string): Promise<FinancialEmail[]>;
+  updateFinancialEmail(id: string, updates: Partial<FinancialEmail>): Promise<FinancialEmail>;
+  deleteFinancialEmail(id: string): Promise<void>;
+  getEmailStats(userId: string): Promise<{
+    totalEmails: number;
+    receipts: number;
+    bills: number;
+    statements: number;
+    withAttachments: number;
+  }>;
+  
+  // Contact operations
+  upsertFinancialContact(contact: InsertFinancialContactType): Promise<FinancialContact>;
+  getFinancialContacts(userId: string): Promise<FinancialContact[]>;
+  updateContactEmailCount(userId: string, email: string): Promise<void>;
+  
+  // Gmail label operations
+  createGmailLabel(label: InsertGmailLabelType): Promise<GmailLabel>;
+  getGmailLabels(userId: string): Promise<GmailLabel[]>;
+  deleteGmailLabel(id: string): Promise<void>;
+  
+  // Email filter operations
+  createEmailFilter(filter: InsertEmailFilterType): Promise<EmailFilter>;
+  getEmailFilters(userId: string): Promise<EmailFilter[]>;
+  updateEmailFilter(id: string, updates: Partial<EmailFilter>): Promise<EmailFilter>;
+  deleteEmailFilter(id: string): Promise<void>;
+  
+  // Batch job operations
+  createBatchJob(job: InsertBatchJobType): Promise<BatchJob>;
+  getBatchJobs(userId: string, limit?: number): Promise<BatchJob[]>;
+  updateBatchJob(id: string, updates: Partial<BatchJob>): Promise<BatchJob>;
+  getActiveBatchJobs(userId: string): Promise<BatchJob[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User> = new Map();
-  private financeLabels: Map<number, FinanceLabel> = new Map();
-  private emailFilters: Map<number, EmailFilter> = new Map();
-  private financialContacts: Map<number, FinancialContact> = new Map();
-  private financialEmails: Map<number, FinancialEmail> = new Map();
-  private exportJobs: Map<number, ExportJob> = new Map();
-  private currentId = 1;
-
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.email === email);
-  }
-
-  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.googleId === googleId);
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { 
-      ...insertUser, 
-      id, 
-      createdAt: new Date() 
-    };
-    this.users.set(id, user);
+export class DatabaseStorage implements IStorage {
+  // User operations (mandatory for Replit Auth)
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
-    const user = this.users.get(id);
-    if (!user) return undefined;
-    
-    const updatedUser = { ...user, ...updates };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
   }
 
-  async getFinanceLabels(userId: number): Promise<FinanceLabel[]> {
-    return Array.from(this.financeLabels.values()).filter(label => label.userId === userId);
+  // Email operations
+  async createFinancialEmail(email: InsertFinancialEmailType): Promise<FinancialEmail> {
+    const [created] = await db.insert(financialEmails).values(email).returning();
+    return created;
   }
 
-  async createFinanceLabel(insertLabel: InsertFinanceLabel): Promise<FinanceLabel> {
-    const id = this.currentId++;
-    const label: FinanceLabel = {
-      ...insertLabel,
-      id,
-      createdAt: new Date()
-    };
-    this.financeLabels.set(id, label);
-    return label;
+  async getFinancialEmails(userId: string, limit = 50, offset = 0): Promise<FinancialEmail[]> {
+    return await db
+      .select()
+      .from(financialEmails)
+      .where(eq(financialEmails.userId, userId))
+      .orderBy(desc(financialEmails.dateReceived))
+      .limit(limit)
+      .offset(offset);
   }
 
-  async updateFinanceLabel(id: number, updates: Partial<FinanceLabel>): Promise<FinanceLabel | undefined> {
-    const label = this.financeLabels.get(id);
-    if (!label) return undefined;
-    
-    const updatedLabel = { ...label, ...updates };
-    this.financeLabels.set(id, updatedLabel);
-    return updatedLabel;
+  async getFinancialEmailsByCategory(userId: string, category: string): Promise<FinancialEmail[]> {
+    return await db
+      .select()
+      .from(financialEmails)
+      .where(and(
+        eq(financialEmails.userId, userId),
+        eq(financialEmails.category, category as any)
+      ))
+      .orderBy(desc(financialEmails.dateReceived));
   }
 
-  async deleteFinanceLabel(id: number): Promise<boolean> {
-    return this.financeLabels.delete(id);
+  async updateFinancialEmail(id: string, updates: Partial<FinancialEmail>): Promise<FinancialEmail> {
+    const [updated] = await db
+      .update(financialEmails)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(financialEmails.id, id))
+      .returning();
+    return updated;
   }
 
-  async getEmailFilters(userId: number): Promise<EmailFilter[]> {
-    return Array.from(this.emailFilters.values()).filter(filter => filter.userId === userId);
+  async deleteFinancialEmail(id: string): Promise<void> {
+    await db.delete(financialEmails).where(eq(financialEmails.id, id));
   }
 
-  async createEmailFilter(insertFilter: InsertEmailFilter): Promise<EmailFilter> {
-    const id = this.currentId++;
-    const filter: EmailFilter = {
-      ...insertFilter,
-      id,
-      createdAt: new Date(),
-      lastRun: null
-    };
-    this.emailFilters.set(id, filter);
-    return filter;
-  }
+  async getEmailStats(userId: string): Promise<{
+    totalEmails: number;
+    receipts: number;
+    bills: number;
+    statements: number;
+    withAttachments: number;
+  }> {
+    const stats = await db
+      .select({
+        totalEmails: sql<number>`count(*)`,
+        receipts: sql<number>`count(*) filter (where category = 'receipt')`,
+        bills: sql<number>`count(*) filter (where category = 'bill')`,
+        statements: sql<number>`count(*) filter (where category = 'statement')`,
+        withAttachments: sql<number>`count(*) filter (where has_attachments = true)`,
+      })
+      .from(financialEmails)
+      .where(eq(financialEmails.userId, userId));
 
-  async updateEmailFilter(id: number, updates: Partial<EmailFilter>): Promise<EmailFilter | undefined> {
-    const filter = this.emailFilters.get(id);
-    if (!filter) return undefined;
-    
-    const updatedFilter = { ...filter, ...updates };
-    this.emailFilters.set(id, updatedFilter);
-    return updatedFilter;
-  }
-
-  async deleteEmailFilter(id: number): Promise<boolean> {
-    return this.emailFilters.delete(id);
-  }
-
-  async getFinancialContacts(userId: number): Promise<FinancialContact[]> {
-    return Array.from(this.financialContacts.values()).filter(contact => contact.userId === userId);
-  }
-
-  async createFinancialContact(insertContact: InsertFinancialContact): Promise<FinancialContact> {
-    const id = this.currentId++;
-    const contact: FinancialContact = {
-      ...insertContact,
-      id,
-      createdAt: new Date()
-    };
-    this.financialContacts.set(id, contact);
-    return contact;
-  }
-
-  async updateFinancialContact(id: number, updates: Partial<FinancialContact>): Promise<FinancialContact | undefined> {
-    const contact = this.financialContacts.get(id);
-    if (!contact) return undefined;
-    
-    const updatedContact = { ...contact, ...updates };
-    this.financialContacts.set(id, updatedContact);
-    return updatedContact;
-  }
-
-  async getFinancialEmails(userId: number, category?: string): Promise<FinancialEmail[]> {
-    const emails = Array.from(this.financialEmails.values()).filter(email => email.userId === userId);
-    if (category) {
-      return emails.filter(email => email.category === category);
-    }
-    return emails;
-  }
-
-  async createFinancialEmail(insertEmail: InsertFinancialEmail): Promise<FinancialEmail> {
-    const id = this.currentId++;
-    const email: FinancialEmail = {
-      ...insertEmail,
-      id,
-      createdAt: new Date()
-    };
-    this.financialEmails.set(id, email);
-    return email;
-  }
-
-  async getEmailStats(userId: number): Promise<{totalEmails: number, receipts: number, bills: number, statements: number}> {
-    const emails = Array.from(this.financialEmails.values()).filter(email => email.userId === userId);
-    
-    return {
-      totalEmails: emails.length,
-      receipts: emails.filter(email => email.category === 'receipt').length,
-      bills: emails.filter(email => email.category === 'bill').length,
-      statements: emails.filter(email => email.category === 'statement').length,
+    return stats[0] || {
+      totalEmails: 0,
+      receipts: 0,
+      bills: 0,
+      statements: 0,
+      withAttachments: 0,
     };
   }
 
-  async getExportJobs(userId: number): Promise<ExportJob[]> {
-    return Array.from(this.exportJobs.values()).filter(job => job.userId === userId);
+  // Contact operations
+  async upsertFinancialContact(contact: InsertFinancialContactType): Promise<FinancialContact> {
+    const [upserted] = await db
+      .insert(financialContacts)
+      .values(contact)
+      .onConflictDoUpdate({
+        target: [financialContacts.userId, financialContacts.email],
+        set: {
+          name: contact.name,
+          domain: contact.domain,
+          category: contact.category,
+          lastEmailDate: contact.lastEmailDate,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return upserted;
   }
 
-  async createExportJob(insertJob: InsertExportJob): Promise<ExportJob> {
-    const id = this.currentId++;
-    const job: ExportJob = {
-      ...insertJob,
-      id,
-      createdAt: new Date(),
-      completedAt: null
-    };
-    this.exportJobs.set(id, job);
-    return job;
+  async getFinancialContacts(userId: string): Promise<FinancialContact[]> {
+    return await db
+      .select()
+      .from(financialContacts)
+      .where(eq(financialContacts.userId, userId))
+      .orderBy(desc(financialContacts.lastEmailDate));
   }
 
-  async updateExportJob(id: number, updates: Partial<ExportJob>): Promise<ExportJob | undefined> {
-    const job = this.exportJobs.get(id);
-    if (!job) return undefined;
-    
-    const updatedJob = { ...job, ...updates };
-    this.exportJobs.set(id, updatedJob);
-    return updatedJob;
+  async updateContactEmailCount(userId: string, email: string): Promise<void> {
+    await db
+      .update(financialContacts)
+      .set({
+        emailCount: sql`email_count + 1`,
+        lastEmailDate: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(financialContacts.userId, userId),
+        eq(financialContacts.email, email)
+      ));
+  }
+
+  // Gmail label operations
+  async createGmailLabel(label: InsertGmailLabelType): Promise<GmailLabel> {
+    const [created] = await db.insert(gmailLabels).values(label).returning();
+    return created;
+  }
+
+  async getGmailLabels(userId: string): Promise<GmailLabel[]> {
+    return await db
+      .select()
+      .from(gmailLabels)
+      .where(eq(gmailLabels.userId, userId))
+      .orderBy(gmailLabels.name);
+  }
+
+  async deleteGmailLabel(id: string): Promise<void> {
+    await db.delete(gmailLabels).where(eq(gmailLabels.id, id));
+  }
+
+  // Email filter operations
+  async createEmailFilter(filter: InsertEmailFilterType): Promise<EmailFilter> {
+    const [created] = await db.insert(emailFilters).values(filter).returning();
+    return created;
+  }
+
+  async getEmailFilters(userId: string): Promise<EmailFilter[]> {
+    return await db
+      .select()
+      .from(emailFilters)
+      .where(eq(emailFilters.userId, userId))
+      .orderBy(emailFilters.priority, emailFilters.name);
+  }
+
+  async updateEmailFilter(id: string, updates: Partial<EmailFilter>): Promise<EmailFilter> {
+    const [updated] = await db
+      .update(emailFilters)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(emailFilters.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteEmailFilter(id: string): Promise<void> {
+    await db.delete(emailFilters).where(eq(emailFilters.id, id));
+  }
+
+  // Batch job operations
+  async createBatchJob(job: InsertBatchJobType): Promise<BatchJob> {
+    const [created] = await db.insert(batchJobs).values(job).returning();
+    return created;
+  }
+
+  async getBatchJobs(userId: string, limit = 10): Promise<BatchJob[]> {
+    return await db
+      .select()
+      .from(batchJobs)
+      .where(eq(batchJobs.userId, userId))
+      .orderBy(desc(batchJobs.createdAt))
+      .limit(limit);
+  }
+
+  async updateBatchJob(id: string, updates: Partial<BatchJob>): Promise<BatchJob> {
+    const [updated] = await db
+      .update(batchJobs)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(batchJobs.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getActiveBatchJobs(userId: string): Promise<BatchJob[]> {
+    return await db
+      .select()
+      .from(batchJobs)
+      .where(and(
+        eq(batchJobs.userId, userId),
+        inArray(batchJobs.status, ['pending', 'running'])
+      ))
+      .orderBy(desc(batchJobs.createdAt));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
