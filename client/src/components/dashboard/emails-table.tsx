@@ -1,107 +1,76 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, FileText, Download, Mail, Calendar, Paperclip } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Eye, Tag, Download, Paperclip } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { FinancialEmail } from "@shared/schema";
 
 interface EmailsTableProps {
-  userId: number;
   category?: string;
+  limit?: number;
 }
 
-export default function EmailsTable({ userId, category }: EmailsTableProps) {
-  const { toast } = useToast();
-  
-  const { data: emails, isLoading } = useQuery({
-    queryKey: ["/api/users", userId, "emails", ...(category ? [{ category }] : [])],
+export default function EmailsTable({ category = 'all', limit = 50 }: EmailsTableProps) {
+  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+
+  const { data: emails, isLoading } = useQuery<FinancialEmail[]>({
+    queryKey: ['/api/emails', { category, limit }],
   });
 
-  const handleViewEmail = (emailId: string) => {
-    toast({
-      title: "Email Viewer",
-      description: "Email viewing functionality would open here",
-    });
-  };
-
-  const handleExportEmail = (emailId: string) => {
-    toast({
-      title: "Export Started",
-      description: "Email is being exported to PDF",
-    });
-  };
-
-  const handleSaveAttachments = (emailId: string) => {
-    toast({
-      title: "Saving Attachments",
-      description: "Attachments are being saved to Drive",
-    });
-  };
-
-  const getCategoryConfig = (category: string | null) => {
-    switch (category) {
-      case "receipt":
-        return { 
-          bg: "bg-gradient-to-r from-purple-50 to-purple-100", 
-          text: "text-purple-800", 
-          badge: "bg-purple-100 text-purple-800",
-          gradient: "from-purple-500 to-purple-600"
-        };
-      case "bill":
-        return { 
-          bg: "bg-gradient-to-r from-cyan-50 to-cyan-100", 
-          text: "text-cyan-800", 
-          badge: "bg-cyan-100 text-cyan-800",
-          gradient: "from-cyan-500 to-cyan-600"
-        };
-      case "statement":
-        return { 
-          bg: "bg-gradient-to-r from-pink-50 to-pink-100", 
-          text: "text-pink-800", 
-          badge: "bg-pink-100 text-pink-800",
-          gradient: "from-pink-500 to-pink-600"
-        };
-      case "invoice":
-        return { 
-          bg: "bg-gradient-to-r from-purple-50 to-cyan-100", 
-          text: "text-purple-800", 
-          badge: "bg-gradient-to-r from-purple-100 to-cyan-100 text-purple-800",
-          gradient: "from-purple-500 to-cyan-500"
-        };
-      default:
-        return { 
-          bg: "bg-gradient-to-r from-gray-50 to-gray-100", 
-          text: "text-gray-800", 
-          badge: "bg-gray-100 text-gray-800",
-          gradient: "from-gray-500 to-gray-600"
-        };
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && emails) {
+      setSelectedEmails(emails.map(email => email.id));
+    } else {
+      setSelectedEmails([]);
     }
+  };
+
+  const handleSelectEmail = (emailId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedEmails([...selectedEmails, emailId]);
+    } else {
+      setSelectedEmails(selectedEmails.filter(id => id !== emailId));
+    }
+  };
+
+  const getCategoryBadge = (category: string) => {
+    const badges = {
+      receipt: { variant: "default" as const, className: "bg-purple-100 text-purple-700" },
+      bill: { variant: "secondary" as const, className: "bg-pink-100 text-pink-700" },
+      statement: { variant: "outline" as const, className: "bg-cyan-100 text-cyan-700" },
+      confirmation: { variant: "outline" as const, className: "bg-cyan-100 text-cyan-700" },
+      invoice: { variant: "secondary" as const, className: "bg-pink-100 text-pink-700" },
+      other: { variant: "outline" as const, className: "bg-gray-100 text-gray-700" },
+    };
+    
+    return badges[category as keyof typeof badges] || badges.other;
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
   if (isLoading) {
     return (
-      <Card className="border-0 shadow-modern bg-white">
-        <CardHeader className="pb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center">
-              <Mail className="h-4 w-4 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-semibold text-gray-900">Recent Financial Emails</CardTitle>
-              <p className="text-sm text-gray-600">Loading your latest emails...</p>
-            </div>
-          </div>
+      <Card className="shadow-modern border border-gray-100">
+        <CardHeader>
+          <CardTitle>Recent Financial Emails</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="animate-pulse p-4 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                  <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+              <div key={i} className="flex items-center space-x-4">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-3 w-[150px]" />
                 </div>
-                <div className="h-3 bg-gray-200 rounded w-2/3 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-4 w-20" />
               </div>
             ))}
           </div>
@@ -110,127 +79,142 @@ export default function EmailsTable({ userId, category }: EmailsTableProps) {
     );
   }
 
-  if (!emails || !Array.isArray(emails) || emails.length === 0) {
-    return (
-      <Card className="border-0 shadow-modern bg-white">
-        <CardHeader className="pb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center">
-              <Mail className="h-4 w-4 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-semibold text-gray-900">Recent Financial Emails</CardTitle>
-              <p className="text-sm text-gray-600">Your organized financial communications</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-purple-50 to-cyan-50 flex items-center justify-center">
-              <Mail className="h-8 w-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No financial emails found</h3>
-            <p className="text-gray-500 mb-6">
-              Connect your Gmail account and sync to see your financial emails here
-            </p>
-            <Button className="bg-purple-gradient hover:shadow-lg">
-              <Mail className="h-4 w-4 mr-2" />
-              Sync Gmail
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
+    <Card className="shadow-modern border border-gray-100">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Recent Financial Emails</CardTitle>
-          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-            View All <i className="fas fa-arrow-right ml-1"></i>
-          </Button>
+          <div className="flex items-center space-x-3">
+            {/* Category Filter Pills */}
+            <div className="flex items-center space-x-2">
+              <Badge className="bg-purple-100 text-purple-700">Receipt</Badge>
+              <Badge className="bg-cyan-100 text-cyan-700">Bill</Badge>
+              <Badge className="bg-pink-100 text-pink-700">Statement</Badge>
+              <Badge className="bg-gray-100 text-gray-700">Other</Badge>
+            </div>
+            <Button variant="ghost" className="text-purple-600 hover:text-purple-700">
+              View All
+            </Button>
+          </div>
         </div>
       </CardHeader>
+      
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Subject
+            <thead>
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="text-left p-4 font-medium text-gray-700 text-sm">
+                  <Checkbox
+                    checked={selectedEmails.length === emails?.length}
+                    onCheckedChange={handleSelectAll}
+                  />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  From
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="text-left p-4 font-medium text-gray-700 text-sm">From</th>
+                <th className="text-left p-4 font-medium text-gray-700 text-sm">Subject</th>
+                <th className="text-left p-4 font-medium text-gray-700 text-sm">Category</th>
+                <th className="text-left p-4 font-medium text-gray-700 text-sm">Date</th>
+                <th className="text-left p-4 font-medium text-gray-700 text-sm">Attachments</th>
+                <th className="text-left p-4 font-medium text-gray-700 text-sm">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {Array.isArray(emails) && emails.map((email: any) => (
-                <tr key={email.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      {email.hasAttachments && (
-                        <i className="fas fa-paperclip text-gray-400 mr-2"></i>
-                      )}
-                      <span className="text-sm font-medium text-gray-900">
+            <tbody>
+              {emails?.map((email) => {
+                const badge = getCategoryBadge(email.category || 'other');
+                const isSelected = selectedEmails.includes(email.id);
+                
+                return (
+                  <tr key={email.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="p-4">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => handleSelectEmail(email.id, checked as boolean)}
+                      />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-medium">
+                            {getInitials(email.fromName || email.fromEmail)}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {email.fromName || email.fromEmail.split('@')[0]}
+                          </p>
+                          <p className="text-sm text-gray-500">{email.fromEmail}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <p className="font-medium text-gray-900 truncate max-w-xs">
                         {email.subject}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{email.from}</td>
-                  <td className="px-6 py-4">
-                    <Badge className={getCategoryConfig(email.category).badge}>
-                      {email.category ? email.category.charAt(0).toUpperCase() + email.category.slice(1) : "Uncategorized"}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {email.date ? new Date(email.date).toLocaleDateString() : "Unknown"}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewEmail(email.id)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleExportEmail(email.id)}
-                        className="text-green-600 hover:text-green-800"
-                      >
-                        <FileText className="h-4 w-4" />
-                      </Button>
-                      {email.hasAttachments && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSaveAttachments(email.id)}
-                          className="text-orange-600 hover:text-orange-800"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+                      </p>
+                      <p className="text-sm text-gray-500 truncate max-w-xs">
+                        {email.snippet}
+                      </p>
+                    </td>
+                    <td className="p-4">
+                      <Badge className={badge.className}>
+                        {(email.category || 'other').charAt(0).toUpperCase() + 
+                         (email.category || 'other').slice(1)}
+                      </Badge>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-sm text-gray-900">
+                        {new Date(email.dateReceived).toLocaleDateString()}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(email.dateReceived).toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </p>
+                    </td>
+                    <td className="p-4">
+                      {email.hasAttachments ? (
+                        <div className="flex items-center space-x-2">
+                          <Paperclip className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-600">
+                            {email.attachmentCount} file{email.attachmentCount !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">No attachments</span>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center space-x-2">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Tag className="h-4 w-4 text-gray-400 hover:text-purple-600" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Download className="h-4 w-4 text-gray-400 hover:text-cyan-600" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
+        </div>
+        
+        {/* Pagination */}
+        <div className="p-4 border-t border-gray-200 flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            Showing 1-{Math.min(limit, emails?.length || 0)} of {emails?.length || 0} emails
+          </p>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm">Previous</Button>
+            <Button size="sm" className="bg-purple-600 text-white hover:bg-purple-700">1</Button>
+            <Button variant="outline" size="sm">2</Button>
+            <Button variant="outline" size="sm">3</Button>
+            <Button variant="outline" size="sm">Next</Button>
+          </div>
         </div>
       </CardContent>
     </Card>

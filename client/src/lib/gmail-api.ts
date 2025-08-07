@@ -11,7 +11,7 @@ export class GmailAPI {
   private clientId: string;
 
   constructor() {
-    this.clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || "";
+    this.clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
   }
 
   static getInstance(): GmailAPI {
@@ -89,92 +89,6 @@ export class GmailAPI {
     }
 
     return response.json();
-  }
-
-  async getEmails(query: string = '', maxResults: number = 50): Promise<any[]> {
-    if (!this.accessToken) {
-      throw new Error('Not authenticated');
-    }
-
-    try {
-      // First, get message IDs
-      const listResponse = await fetch(
-        `https://www.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=${maxResults}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.accessToken}`
-          }
-        }
-      );
-
-      if (!listResponse.ok) {
-        throw new Error('Failed to fetch emails');
-      }
-
-      const listData = await listResponse.json();
-      
-      if (!listData.messages) {
-        return [];
-      }
-
-      // Get full message details
-      const emails = await Promise.all(
-        listData.messages.map(async (message: { id: string }) => {
-          const msgResponse = await fetch(
-            `https://www.googleapis.com/gmail/v1/users/me/messages/${message.id}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${this.accessToken}`
-              }
-            }
-          );
-          return msgResponse.json();
-        })
-      );
-
-      return emails;
-    } catch (error) {
-      throw new Error(`Failed to fetch emails: ${error}`);
-    }
-  }
-
-  async createLabel(name: string, color: string): Promise<any> {
-    if (!this.accessToken) {
-      throw new Error('Not authenticated');
-    }
-
-    const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/labels', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name,
-        labelListVisibility: 'labelShow',
-        messageListVisibility: 'show',
-        color: {
-          backgroundColor: color,
-          textColor: '#ffffff'
-        }
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to create label');
-    }
-
-    return response.json();
-  }
-
-  async exportEmailToPDF(messageId: string): Promise<Blob> {
-    if (!this.accessToken) {
-      throw new Error('Not authenticated');
-    }
-
-    // This would implement email to PDF conversion
-    // For now, return a placeholder
-    return new Blob(['PDF content'], { type: 'application/pdf' });
   }
 
   setAccessToken(token: string) {
