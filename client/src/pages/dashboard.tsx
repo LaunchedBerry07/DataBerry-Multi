@@ -9,6 +9,7 @@ import LabelsGrid from "@/components/labels/labels-grid";
 import FiltersList from "@/components/filters/filters-list";
 import ContactsTable from "@/components/contacts/contacts-table";
 import ExportOptions from "@/components/export/export-options";
+import { BulkOperationsDashboard } from "@/components/bulk-operations/bulk-operations-dashboard";
 import { Settings, RefreshCw, User, Bell } from "lucide-react";
 import appIconPath from "@assets/1752568649408_1753356371508.png";
 
@@ -151,6 +152,12 @@ export default function Dashboard({ user }: DashboardProps) {
               </Button>
             </div>
             <ExportOptions userId={user.id} onCreateExport={handleCreateExport} />
+          </div>
+        );
+      case "bulk":
+        return (
+          <div className="space-y-6">
+            <BulkOperationsDashboard userId={user.id} />
           </div>
         );
       default:

@@ -75,6 +75,38 @@ export const exportJobs = pgTable("export_jobs", {
   completedAt: timestamp("completed_at"),
 });
 
+export const batchJobs = pgTable("batch_jobs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  type: text("type").notNull(), // bulk_sync, bulk_categorize, bulk_export, bulk_delete, bulk_label
+  status: text("status").notNull().default("pending"), // pending, in_progress, completed, failed, cancelled
+  totalItems: integer("total_items").default(0),
+  processedItems: integer("processed_items").default(0),
+  successfulItems: integer("successful_items").default(0),
+  failedItems: integer("failed_items").default(0),
+  criteria: jsonb("criteria"), // selection criteria for bulk operations
+  actions: jsonb("actions"), // actions to perform on selected items
+  progress: integer("progress").default(0), // percentage 0-100
+  errorDetails: jsonb("error_details"), // detailed error information
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const batchOperations = pgTable("batch_operations", {
+  id: serial("id").primaryKey(),
+  batchJobId: integer("batch_job_id").notNull(),
+  itemId: integer("item_id").notNull(), // ID of the item being processed
+  itemType: text("item_type").notNull(), // email, contact, label, filter
+  status: text("status").notNull().default("pending"), // pending, processing, completed, failed
+  operation: text("operation").notNull(), // sync, categorize, export, delete, label
+  result: jsonb("result"), // operation result data
+  errorMessage: text("error_message"),
+  processingTime: integer("processing_time"), // milliseconds
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -108,6 +140,19 @@ export const insertExportJobSchema = createInsertSchema(exportJobs).omit({
   completedAt: true,
 });
 
+export const insertBatchJobSchema = createInsertSchema(batchJobs).omit({
+  id: true,
+  createdAt: true,
+  startedAt: true,
+  completedAt: true,
+});
+
+export const insertBatchOperationSchema = createInsertSchema(batchOperations).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -126,3 +171,48 @@ export type InsertFinancialEmail = z.infer<typeof insertFinancialEmailSchema>;
 
 export type ExportJob = typeof exportJobs.$inferSelect;
 export type InsertExportJob = z.infer<typeof insertExportJobSchema>;
+
+export type BatchJob = typeof batchJobs.$inferSelect;
+export type InsertBatchJob = z.infer<typeof insertBatchJobSchema>;
+
+export type BatchOperation = typeof batchOperations.$inferSelect;
+export type InsertBatchOperation = z.infer<typeof insertBatchOperationSchema>;
+
+// Bulk operation request schemas
+export const bulkEmailOperationSchema = z.object({
+  operation: z.enum(['categorize', 'label', 'export', 'delete', 'sync']),
+  criteria: z.object({
+    dateRange: z.object({
+      start: z.string().optional(),
+      end: z.string().optional(),
+    }).optional(),
+    category: z.string().optional(),
+    hasAttachments: z.boolean().optional(),
+    fromDomains: z.array(z.string()).optional(),
+    subjects: z.array(z.string()).optional(),
+    labelIds: z.array(z.number()).optional(),
+  }),
+  actions: z.object({
+    newCategory: z.string().optional(),
+    newLabelId: z.number().optional(),
+    exportType: z.enum(['metadata', 'pdf', 'attachments']).optional(),
+    exportFormat: z.enum(['csv', 'json', 'xlsx']).optional(),
+  }).optional(),
+});
+
+export const bulkContactOperationSchema = z.object({
+  operation: z.enum(['merge', 'categorize', 'sync', 'delete']),
+  criteria: z.object({
+    types: z.array(z.string()).optional(),
+    emailDomains: z.array(z.string()).optional(),
+    lastEmailBefore: z.string().optional(),
+    duplicateEmails: z.boolean().optional(),
+  }),
+  actions: z.object({
+    newType: z.string().optional(),
+    mergeIntoId: z.number().optional(),
+  }).optional(),
+});
+
+export type BulkEmailOperation = z.infer<typeof bulkEmailOperationSchema>;
+export type BulkContactOperation = z.infer<typeof bulkContactOperationSchema>;
