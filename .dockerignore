@@ -1,0 +1,26 @@
+# Docker
+Dockerfile
+.dockerignore
+
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log*
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+dist
+build
+
+# Documentation & Scripts
+*.md
+*.txt
+scripts/
+terraform/

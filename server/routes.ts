@@ -1,18 +1,30 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage } from "./storage.js";
 import { 
   insertUserSchema, 
   insertFinanceLabelSchema, 
   insertEmailFilterSchema,
   insertFinancialContactSchema,
   insertFinancialEmailSchema,
-  insertExportJobSchema
+  insertExportJobSchema,
+  bulkEmailOperationSchema,
+  bulkContactOperationSchema
 } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Health check endpoint for Google Cloud
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
+  });
+
+  // Readiness check endpoint for Google Cloud
+  app.get("/api/ready", (req, res) => {
+    res.status(200).json({ status: "ready", timestamp: new Date().toISOString() });
+  });
+
   // Gmail OAuth routes
   app.post("/api/auth/google", async (req, res) => {
     try {
@@ -230,6 +242,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Sync completed", timestamp: new Date() });
     } catch (error) {
       res.status(500).json({ message: "Sync failed" });
+    }
+  });
+
+  // Batch jobs routes
+  app.get("/api/users/:userId/batch-jobs", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const jobs = await storage.getBatchJobs(userId);
+      res.json(jobs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get batch jobs" });
+    }
+  });
+
+  app.get("/api/batch-jobs/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const job = await storage.getBatchJob(id);
+      if (!job) {
+        return res.status(404).json({ message: "Batch job not found" });
+      }
+      res.json(job);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get batch job" });
+    }
+  });
+
+  app.get("/api/batch-jobs/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const status = await storage.getBulkOperationStatus(id);
+      if (!status) {
+        return res.status(404).json({ message: "Batch job not found" });
+      }
+      res.json(status);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get batch job status" });
+    }
+  });
+
+  app.post("/api/batch-jobs/:id/cancel", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const cancelled = await storage.cancelBatchJob(id);
+      if (!cancelled) {
+        return res.status(400).json({ message: "Cannot cancel batch job" });
+      }
+      res.json({ success: true, message: "Batch job cancelled" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to cancel batch job" });
+    }
+  });
+
+  app.get("/api/batch-jobs/:id/operations", async (req, res) => {
+    try {
+      const batchJobId = parseInt(req.params.id);
+      const operations = await storage.getBatchOperations(batchJobId);
+      res.json(operations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get batch operations" });
+    }
+  });
+
+  // Bulk operations routes
+  app.post("/api/users/:userId/bulk/emails", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const operation = bulkEmailOperationSchema.parse(req.body);
+      const batchJob = await storage.processBulkEmailOperation(userId, operation);
+      res.json(batchJob);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid operation data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to start bulk email operation" });
+    }
+  });
+
+  app.post("/api/users/:userId/bulk/contacts", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const operation = bulkContactOperationSchema.parse(req.body);
+      const batchJob = await storage.processBulkContactOperation(userId, operation);
+      res.json(batchJob);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid operation data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to start bulk contact operation" });
+    }
+  });
+
+  // Bulk operations examples and templates
+  app.get("/api/bulk/templates/emails", async (req, res) => {
+    try {
+      const templates = {
+        categorizeReceipts: {
+          operation: "categorize",
+          criteria: {
+            category: "receipt",
+            dateRange: {
+              start: "2024-01-01",
+              end: "2024-12-31"
+            }
+          },
+          actions: {
+            newCategory: "receipt"
+          }
+        },
+        labelByDomain: {
+          operation: "label",
+          criteria: {
+            fromDomains: ["amazon.com", "paypal.com"]
+          },
+          actions: {
+            newLabelId: 1
+          }
+        },
+        exportAttachments: {
+          operation: "export",
+          criteria: {
+            hasAttachments: true,
+            category: "bill"
+          },
+          actions: {
+            exportType: "attachments",
+            exportFormat: "pdf"
+          }
+        }
+      };
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get email templates" });
+    }
+  });
+
+  app.get("/api/bulk/templates/contacts", async (req, res) => {
+    try {
+      const templates = {
+        categorizeVendors: {
+          operation: "categorize",
+          criteria: {
+            types: ["vendor"]
+          },
+          actions: {
+            newType: "vendor"
+          }
+        },
+        cleanupOldContacts: {
+          operation: "delete",
+          criteria: {
+            lastEmailBefore: "2023-01-01"
+          }
+        }
+      };
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get contact templates" });
     }
   });
 

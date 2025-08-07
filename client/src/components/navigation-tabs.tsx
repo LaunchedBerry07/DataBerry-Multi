@@ -16,6 +16,7 @@ const tabs: Tab[] = [
   { id: "labels", label: "Labels", icon: "fas fa-tags" },
   { id: "filters", label: "Filters", icon: "fas fa-filter" },
   { id: "contacts", label: "Contacts", icon: "fas fa-address-book" },
+  { id: "bulk", label: "Bulk Operations", icon: "fas fa-bolt" },
   { id: "export", label: "Export", icon: "fas fa-download" },
 ];
 
