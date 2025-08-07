@@ -1,2 +1,0 @@
-# DataBerry
-Financial Data Management
