@@ -1,0 +1,155 @@
+/* FontAwesome icons support */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(217, 19%, 27%);
+  --muted: hsl(240, 10%, 98%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(217, 19%, 27%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(217, 19%, 27%);
+  --border: hsl(240, 6%, 90%);
+  --input: hsl(240, 6%, 90%);
+  --primary: hsl(264, 89%, 71%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(190, 100%, 59%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(330, 100%, 68%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --ring: hsl(240, 5%, 64.9%);
+  --radius: 0.75rem;
+  
+  /* Custom color palette from provided image */
+  --purple-light: hsl(264, 89%, 85%); /* B97DFA */
+  --purple-medium: hsl(264, 89%, 71%); /* 4B3196 */
+  --purple-dark: hsl(261, 85%, 43%); /* 341E69 */
+  --cyan: hsl(190, 100%, 59%); /* 38D5FD */
+  --blue: hsl(221, 100%, 54%); /* 0068D6 */
+  --blue-dark: hsl(225, 100%, 33%); /* 01351F */
+  --pink: hsl(330, 100%, 68%); /* FD5CA3 */
+  --pink-dark: hsl(330, 75%, 43%); /* FD2FA3 */
+  --purple-accent: hsl(270, 75%, 54%); /* A6006D */
+  --gray-light: hsl(240, 10%, 98%);
+  --gray-medium: hsl(240, 5%, 84%); /* D7D4DD */
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom styles for Material Design elements */
+.shadow-material {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.shadow-material-lg {
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15), 0 16px 32px rgba(0,0,0,0.15);
+}
+
+/* Custom styles for modern admin dashboard */
+.shadow-modern {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.shadow-modern-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.gradient-purple {
+  background: linear-gradient(135deg, var(--purple-medium) 0%, var(--purple-dark) 100%);
+}
+
+.gradient-cyan {
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--blue) 100%);
+}
+
+.gradient-pink {
+  background: linear-gradient(135deg, var(--pink) 0%, var(--pink-dark) 100%);
+}
+
+/* Custom color utilities */
+.bg-purple-gradient {
+  background: linear-gradient(135deg, hsl(264, 89%, 71%) 0%, hsl(261, 85%, 43%) 100%);
+}
+
+.bg-cyan-gradient {
+  background: linear-gradient(135deg, hsl(190, 100%, 59%) 0%, hsl(221, 100%, 54%) 100%);
+}
+
+.bg-pink-gradient {
+  background: linear-gradient(135deg, hsl(330, 100%, 68%) 0%, hsl(330, 75%, 43%) 100%);
+}
+
+.text-purple-600 {
+  color: hsl(264, 89%, 71%);
+}
+
+.text-cyan-600 {
+  color: hsl(190, 100%, 59%);
+}
+
+.text-pink-600 {
+  color: hsl(330, 100%, 68%);
+}
+
+.bg-purple-600 {
+  background-color: hsl(264, 89%, 71%);
+}
+
+.bg-cyan-600 {
+  background-color: hsl(190, 100%, 59%);
+}
+
+.bg-pink-600 {
+  background-color: hsl(330, 100%, 68%);
+}
+
+.hover\:bg-purple-700:hover {
+  background-color: hsl(261, 85%, 43%);
+}
+
+.hover\:bg-cyan-700:hover {
+  background-color: hsl(221, 100%, 54%);
+}
+
+.hover\:bg-pink-700:hover {
+  background-color: hsl(330, 75%, 43%);
+}

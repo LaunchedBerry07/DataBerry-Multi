@@ -1,0 +1,16 @@
+# Gmail Finance Manager - Terraform Variables for launchedberry project
+# Copy this file to terraform.tfvars and update with your values
+
+# Google Cloud Project Configuration
+project_id = "launchedberry"
+region     = "us-central1"
+
+# Database Configuration - Google Cloud SQL PostgreSQL
+database_url = "postgresql://postgres:StormyWarrior8*@35.232.144.197:5432/postgres?sslmode=require"
+
+# Google OAuth Configuration
+google_client_id     = "94103934446-nojqrs5mg1ui1lfbkqg2eni7d5vn4rgg.apps.googleusercontent.com"
+google_client_secret = "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"
+
+# Application Configuration
+session_secret = "8f2a9b4c6d1e7f3g5h9i2j4k6l8m0n3p5q7r9s1t4u6v8w0x2y4z6a8b0c2d4e6f8g"
